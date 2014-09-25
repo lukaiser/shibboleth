@@ -39,6 +39,22 @@ function shibboleth_auto_login() {
 add_action('init', 'shibboleth_auto_login');
 
 /**
+ * Add user to current blog if necessary
+ */
+function shibboleth_add_user_to_current_blog() {
+    if ( is_user_logged_in() && shibboleth_session_active() ) {
+        $user = wp_get_current_user();
+        if ( get_usermeta($user->ID, 'shibboleth_account') ) {
+            if ( empty ( $user->roles ) or ! is_array( $user->roles ) ){
+                $user_role = shibboleth_get_user_role();
+                $user->set_role($user_role);
+            }
+        }
+    }
+}
+add_action('init', 'shibboleth_add_user_to_current_blog');
+
+/**
  * Activate the plugin.  This registers default values for all of the 
  * Shibboleth options and attempts to add the appropriate mod_rewrite rules to 
  * WordPress's .htaccess file.
@@ -246,9 +262,9 @@ function shibboleth_session_initiator_url($redirect = null) {
 
 	// first build the target URL.  This is the WordPress URL the user will be returned to after Shibboleth 
 	// is done, and will handle actually logging the user into WordPress using the data provdied by Shibboleth 
-	if ( function_exists('switch_to_blog') ) switch_to_blog($GLOBALS['current_site']->blog_id);
+	//if ( function_exists('switch_to_blog') ) switch_to_blog($GLOBALS['current_site']->blog_id);
 	$target = site_url('wp-login.php');
-	if ( function_exists('restore_current_blog') ) restore_current_blog();
+	//if ( function_exists('restore_current_blog') ) restore_current_blog();
 
 	$target = add_query_arg('action', 'shibboleth', $target);
 	if ( !empty($redirect) ) {
@@ -319,6 +335,10 @@ function shibboleth_authenticate_user() {
 		$user->set_role($user_role);
 		do_action( 'shibboleth_set_user_roles', $user );
 	}
+
+    if ( empty ( $user->roles ) or ! is_array( $user->roles ) ){
+        $user->set_role($user_role);
+    }
 
 	return $user;
 }

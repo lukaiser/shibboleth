@@ -47,7 +47,9 @@ function shibboleth_add_user_to_current_blog() {
         if ( get_usermeta($user->ID, 'shibboleth_account') ) {
             if ( empty ( $user->roles ) or ! is_array( $user->roles ) ){
                 $user_role = shibboleth_get_user_role();
-                $user->set_role($user_role);
+                if ( !empty($user_role) ) {
+                    $user->set_role($user_role);
+                }
             }
         }
     }
